@@ -1,14 +1,7 @@
-pip~=22.1.2
-attrs~=21.4.0
-py~=1.11.0
-lxml~=4.8.0
-Jinja2~=3.1.1
-setuptools~=49.2.1
-colorama~=0.4.4
-beautifulsoup4~=4.11.1
-MarkupSafe~=2.1.1
-certifi~=2022.5.18.1
-requests~=2.5.0
-idna~=3.3
-urllib3~=1.26.9
-python-dotenv~=0.20.0
+beautifulsoup4==4.11.1
+requests==2.5.0
+python-dotenv==0.20.0
+pyTelegramBotAPI==4.5.1
+python-telegram-bot-calendar==1.0.5
+loader==2017.9.11
+Current interpreter: Python 3.9
