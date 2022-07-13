@@ -4,4 +4,4 @@ python-dotenv==0.20.0
 pyTelegramBotAPI==4.5.1
 python-telegram-bot-calendar==1.0.5
 loader==2017.9.11
-Current interpreter: Python 3.9
+
