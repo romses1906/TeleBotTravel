@@ -4,6 +4,7 @@ import json
 from loader import bot
 from config_data import config
 from typing import List, Dict, Any
+from telebot.types import InputMediaPhoto
 
 
 def hotels(user: Any, chat: Any) -> None:
@@ -79,13 +80,6 @@ def hotels(user: Any, chat: Any) -> None:
                 send_info_hotel(user, chat, hotel=i_hot)
 
         elif data['command'] == '/bestdeal':
-            # TODO При выборе команды bestdeal делаю sortOrder = 'DISTANCE_FROM_LANDMARK, landmarkIds = 'Центр города',
-            # TODO но в таком случае программа выдает отели, ближайшие к "Центр города", если изначально выбрана самая верхняя
-            # TODO локация из inline-кнопок с локациями, если же выбрана другая локация, то у отелей из этих локаций нет landmark 'Центр города'
-            # TODO и программа выдает отели, ближайшие к каким-то другим достопримечательностям, но не к центру города, чтобы убедиться в этом,
-            # TODO протестируйте бота на любом городе, скрин со своим примером приложу. Как сделать так, чтобы в результате поиска выдавало
-            # TODO отели с расстоянием именно от центра города, независимо от выбранной изначально локации? А то при команде bestdeal выбор локации
-            # TODO становится не нужен, так как отели, ближайшие к "центр города", программа выдаст только в случае выбора самой верхнее локации на кнопках
 
             response: Response = request.get_request(url=url, headers=config.headers, params=querystring)
             hotels_dict: Dict = json.loads(response.text)
@@ -110,33 +104,39 @@ def hotels(user: Any, chat: Any) -> None:
                                        'Попробуйте изменить условия поиска, приносим свои извинения.')
             elif len(result_hotels_lst_sorted) < int(data['count_hotels']):
                 bot.send_message(user,
-                                 f'К сожалению, удалось найти только {len(result_hotels_lst_sorted)} отеля, удовлетворяющих условиям Вашего запроса. '
+                                 f'К сожалению, удалось найти только {len(result_hotels_lst_sorted)} отеля, '
+                                 f'удовлетворяющих условиям Вашего запроса. '
                                  'Попробуйте изменить условия поиска, приносим свои извинения.')
-
+            print(result_hotels_lst_sorted)
             for i_hot in result_hotels_lst_sorted[:int(data['count_hotels'])]:
                 send_info_hotel(user, chat, hotel=i_hot)
 
 
-def photo(user: Any, chat: Any, id: str) -> None:
+def photo(user: Any, chat: Any, id_hotel: str):
     """
     Функция для запроса к API и вывода фотографий отелей на экран
 
     :param user: Any
     :param chat: Any
-    :param id: str
+    :param id_hotel: str
     :return: None
     """
     url: str = "https://hotels4.p.rapidapi.com/properties/get-hotel-photos"
+    try:
+        with bot.retrieve_data(user, chat) as data:
+            querystring: Dict[str, str] = {"id": id_hotel}
 
-    with bot.retrieve_data(user, chat) as data:
-        querystring: Dict[str, str] = {"id": id}
+            response: Response = request.get_request(url=url, headers=config.headers, params=querystring)
+            photos: Dict = json.loads(response.text)
+            photos_lst: List = photos['hotelImages'][:int(data['count_photo'])]
+            photo_media_lst = []
+            for i_photo in photos_lst:
+                url_photo: str = i_photo['baseUrl'].replace('_{size}', '')
+                photo_media_lst.append(url_photo)
 
-        response: Response = request.get_request(url=url, headers=config.headers, params=querystring)
-        photos: Dict = json.loads(response.text)
-        photos_lst: List = photos['hotelImages'][:int(data['count_photo'])]
-        for i_photo in photos_lst:
-            url_photo: str = i_photo['baseUrl'].replace('_{size}', '_z')
-            bot.send_photo(chat, url_photo)
+            return photo_media_lst
+    except Exception as err:
+        print(err)
 
 
 def send_info_hotel(user: Any, chat: Any, hotel: Dict) -> None:
@@ -148,23 +148,31 @@ def send_info_hotel(user: Any, chat: Any, hotel: Dict) -> None:
     :param hotel: Dict
     :return: None
     """
-    with bot.retrieve_data(user, chat) as data:
-        name: str = hotel['name']
-        hotel_id = data['hotel_id'] = hotel['id']
-        adress: str = hotel['address']['streetAddress']
-        name_label_1: str = hotel['landmarks'][0]['label']
-        distance_from_label_1: str = hotel['landmarks'][0]['distance']
-        name_label_2: str = hotel['landmarks'][1]['label']
-        distance_from_label_2: str = hotel['landmarks'][1]['distance']
-        price: float = hotel['ratePlan']['price']['exactCurrent']
-        rest_days: int = (data['date_departure'] - data['date_arrival']).days
-        full_price: float = round(price * rest_days, 2)
+    try:
+        with bot.retrieve_data(user, chat) as data:
+            name: str = hotel['name']
+            hotel_id = data['hotel_id'] = hotel['id']
+            adress: str = hotel['address']['streetAddress']
+            name_label_1: str = hotel['landmarks'][0]['label']
+            distance_from_label_1: str = hotel['landmarks'][0]['distance']
+            name_label_2: str = hotel['landmarks'][1]['label']
+            distance_from_label_2: str = hotel['landmarks'][1]['distance']
+            price: float = hotel['ratePlan']['price']['exactCurrent']
+            rest_days: int = (data['date_departure'] - data['date_arrival']).days
+            full_price: float = round(price * rest_days, 2)
+            find_info = f'Название отеля: {name}\nСайт отеля: https://www.hotels.com/ho{hotel_id}\n' \
+                        f'Адрес отеля: {adress}\n' \
+                        f'Расстояние от отеля до "{name_label_1}": {distance_from_label_1}\n' \
+                        f'Расстояние от отеля до "{name_label_2}": {distance_from_label_2}\n' \
+                        f'Стоимость проживания за 1 сутки: {price} RUB\n' \
+                        f'Стоимость проживания за {rest_days} суток: {full_price} RUB'
 
-        bot.send_message(user, f'Название отеля: {name}\n'
-                               f'Сайт отеля: https://www.hotels.com/ho{hotel_id}\n'
-                               f'Адрес отеля: {adress}\n'
-                               f'Расстояние от отеля до "{name_label_1}": {distance_from_label_1}\n'
-                               f'Расстояние от отеля до "{name_label_2}": {distance_from_label_2}\n'
-                               f'Стоимость проживания за 1 сутки: {price} RUB\n'
-                               f'Стоимость проживания за {rest_days} суток: {full_price} RUB')
-    photo(user, chat, id=hotel_id)
+            media_lst = photo(user=user, chat=chat, id_hotel=hotel_id)
+
+            media = [InputMediaPhoto(media_lst[pic], find_info) if pic == len(media_lst) - 1 else InputMediaPhoto(
+                media_lst[pic]) for pic in range(len(media_lst))]
+
+            bot.send_media_group(chat, media)
+
+    except Exception as err:
+        print(err)

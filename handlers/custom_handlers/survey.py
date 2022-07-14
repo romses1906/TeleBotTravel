@@ -1,6 +1,3 @@
-import requests
-import json
-import re
 from loader import bot
 from states.contact_information import UserInfoState
 from telebot import types
@@ -23,7 +20,7 @@ def survey(message: Message) -> None:
     :return: None
     """
     bot.set_state(message.from_user.id, UserInfoState.name, message.chat.id)
-    bot.send_message(message.from_user.id, 'Привет, введи свое имя')
+    bot.send_message(message.from_user.id, 'Как я могу к Вам обращаться?')
 
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
         data['command'] = message.text
@@ -61,6 +58,7 @@ def get_location(call: types.CallbackQuery) -> None:
     :param call: CallbackQuery
     :return: None
     """
+    bot.edit_message_reply_markup(chat_id=call.message.chat.id, message_id=call.message.message_id)
     bot.send_message(call.from_user.id,
                      'Спасибо, записал. Выберите дату заезда в отель')
 
@@ -73,10 +71,11 @@ def get_location(call: types.CallbackQuery) -> None:
                      reply_markup=calendar)
 
     with bot.retrieve_data(call.from_user.id, call.message.chat.id) as data:
-        cities: List[Dict[str, str]] = choice_location.city_founding(city=data['city'])
-        for i_city in cities:
-            if call.data == i_city['destination_id']:
-                data['location']: str = i_city['city_name']
+        locations = call.message.json['reply_markup']['inline_keyboard']
+
+        for i_locations in locations:
+            if call.data == i_locations[0]['callback_data']:
+                data['location']: str = i_locations[0]['text']
                 data['location_id']: str = call.data
     bot.answer_callback_query(callback_query_id=call.id)
 
@@ -94,7 +93,7 @@ def handle_arrival_date(call: types.CallbackQuery) -> None:
     result, key, step = inline.calendar.get_calendar(calendar_id=1, current_date=today,
                                                      min_date=today, max_date=today + timedelta(days=365), locale='ru',
                                                      is_process=True,
-                                                     callback_data=call)  # уточнить, правильно ли импортирую модуль календарь
+                                                     callback_data=call)
     if not result and key:
         bot.edit_message_text(f"Выберите {ALL_STEPS[step]}",
                               call.message.chat.id,
@@ -151,11 +150,11 @@ def handle_departure_date(call: types.CallbackQuery) -> None:
                               call.message.message_id)
         if data['command'] == '/bestdeal':
             bot.send_message(call.from_user.id,
-                             f'Введите диапазон цен для поиска подходящих отелей. Введите минимальную цену (руб)')
+                             'Введите диапазон цен для поиска подходящих отелей. Введите минимальную цену (руб)')
             bot.set_state(call.from_user.id, UserInfoState.min_price, call.message.chat.id)
         elif data['command'] == '/lowprice' or data['command'] == '/highprice':
             bot.send_message(call.from_user.id,
-                             f'Введи количество отелей, которое необходимо вывести в результате, но не более 5')
+                             'Введите количество отелей, которое необходимо вывести в результате, но не более 5')
             bot.set_state(call.from_user.id, UserInfoState.count_hotels, call.message.chat.id)
 
 
@@ -204,8 +203,9 @@ def get_distance_range(message: Message) -> None:
     :param message: Message
     :return: None
     """
-    bot.send_message(message.from_user.id, f'Спасибо, записал.'
-                                           f'Введите количество отелей, которое необходимо вывести в результате, но не более 5')
+    bot.send_message(message.from_user.id,
+                     'Спасибо, записал. Введите количество отелей, которое необходимо вывести в результате, '
+                     'но не более 5')
     bot.set_state(message.from_user.id, UserInfoState.count_hotels, message.chat.id)
 
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
@@ -245,9 +245,11 @@ def get_photo(call: types.CallbackQuery) -> None:
     :param call: CallbackQuery
     :return: None
     """
+    bot.edit_message_reply_markup(chat_id=call.message.chat.id, message_id=call.message.message_id)
     if call.data == 'photo_please':
         bot.send_message(call.from_user.id,
-                         'Спасибо, записал. Введите количество необходимых фото для каждого найденного отеля, но не более 10')
+                         'Спасибо, записал. Введите количество необходимых фото для каждого найденного отеля, '
+                         'но не более 10')
         bot.set_state(call.from_user.id, UserInfoState.count_photo, call.message.chat.id)
 
         with bot.retrieve_data(call.from_user.id, call.message.chat.id) as data:
@@ -259,7 +261,7 @@ def get_photo(call: types.CallbackQuery) -> None:
             data['count_photo'] = 0
         get_final_info(call, is_rejection=True)
 
-    bot.answer_callback_query(callback_query_id=call.id)  # ответ был получен
+    bot.answer_callback_query(callback_query_id=call.id)
 
 
 @bot.message_handler(state=UserInfoState.count_photo)
@@ -308,6 +310,7 @@ def get_final_info(message, is_rejection: bool = False) -> None:
         rest_days = date_departure - date_arrival
         count_hotels: str = data['count_hotels']
         count_photo: str = data['count_photo']
+        command: str = data['command']
         if data['command'] == '/bestdeal':
             min_price: str = data['min_price']
             max_price: str = data['max_price']
@@ -319,7 +322,8 @@ def get_final_info(message, is_rejection: bool = False) -> None:
                              f'Минимальная цена за сутки: {min_price}\nМаксимальная цена за сутки: {max_price}\n'
                              f'Расстояние отелей от центра города: {distance_range}\n'
                              f'Количество отелей в результате поиска: {count_hotels}\n'
-                             f'Количество выводимых фотографий для каждого отеля: {count_photo}')
+                             f'Количество выводимых фотографий для каждого отеля: {count_photo}\n'
+                             f'Выбранная команда: {command}')
             bot.send_message(user_id, 'Веду поиск...')
             result_info.hotels(user=user_id, chat=chat_id)
         elif data['command'] == '/lowprice' or data['command'] == '/highprice':
@@ -328,7 +332,8 @@ def get_final_info(message, is_rejection: bool = False) -> None:
                              f'Ваше имя: {name}\nГород: {city}\nЛокация в городе: {location}\nДата заезда: {date_arrival}\n'
                              f'Дата выезда: {date_departure}\nКоличество дней отдыха: {rest_days.days}\n'
                              f'Количество отелей в результате поиска: {count_hotels}\n'
-                             f'Количество выводимых фотографий для каждого отеля: {count_photo}')
+                             f'Количество выводимых фотографий для каждого отеля: {count_photo}\n'
+                             f'Выбранная команда: {command}')
             bot.send_message(user_id, 'Веду поиск...')
             result_info.hotels(user=user_id, chat=chat_id)
 
