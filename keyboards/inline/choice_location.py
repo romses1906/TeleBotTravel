@@ -1,4 +1,5 @@
 import json
+from json import JSONDecodeError
 import re
 from telebot import types
 from telebot.types import Message, InlineKeyboardMarkup
@@ -7,6 +8,10 @@ from handlers.work_with_api import request
 from config_data import config
 from typing import List, Dict, Optional, Match
 from requests import Response
+from loguru import logger
+
+logger.add('debug.log', level='DEBUG', format="{time} {level} {message}", rotation="08:00",
+           compression="zip")
 
 
 def city_founding(city: Message) -> List[Dict[str, str]]:
@@ -20,12 +25,15 @@ def city_founding(city: Message) -> List[Dict[str, str]]:
 
     querystring_locations_search: Dict[str, str] = {"query": city.text, "locale": "ru_RU", "currency": "RUB"}
 
-    response: Response = request.get_request(url=url_locations_search, headers=config.headers,
-                                             params=querystring_locations_search)
-    pattern: str = r'(?<="CITY_GROUP",).+?[\]]'
-    find: Optional[Match[str]] = re.search(pattern, response.text)
-    if find:
-        try:
+    try:
+        response: Response = request.get_request(url=url_locations_search, headers=config.headers,
+                                                 params=querystring_locations_search)
+        pattern: str = r'(?<="CITY_GROUP",).+?[\]]'
+
+        find: Optional[Match[str]] = re.search(pattern, response.text)
+
+        if find:
+
             suggestions: Dict = json.loads(f"{{{find[0]}}}")
 
             cities: List = list()
@@ -36,8 +44,8 @@ def city_founding(city: Message) -> List[Dict[str, str]]:
                     if data['command'] == '/bestdeal':
                         break
             return cities
-        except Exception as err:
-            print(err)
+    except (AttributeError, LookupError, KeyError, ValueError, JSONDecodeError) as exc:
+        logger.exception(exc)
 
 
 def city_markup(user_city: Message) -> InlineKeyboardMarkup:
@@ -47,14 +55,19 @@ def city_markup(user_city: Message) -> InlineKeyboardMarkup:
     :param user_city: город, выбранный пользователем для поиска отелей
     :return destinations: инлайн-кнопки для выбора локации в указанном городе
     """
-    cities: List[Dict[str, str]] = city_founding(city=user_city)
 
-    # Функция "city_founding" уже возвращает список словарей с нужным именем и id
-    destinations: InlineKeyboardMarkup = types.InlineKeyboardMarkup()
-    for city in cities:
-        destinations.add(types.InlineKeyboardButton(text=city['city_name'],
-                                                    callback_data=f'{city["destination_id"]}'))
-    return destinations
+    try:
+        cities: List[Dict[str, str]] = city_founding(city=user_city)
+
+        # Функция "city_founding" уже возвращает список словарей с нужным именем и id
+        destinations: InlineKeyboardMarkup = types.InlineKeyboardMarkup()
+
+        for city in cities:
+            destinations.add(types.InlineKeyboardButton(text=city['city_name'],
+                                                        callback_data=f'{city["destination_id"]}'))
+        return destinations
+    except TypeError as exc:
+        logger.exception(exc)
 
 
 def city(message: Message) -> None:
@@ -66,5 +79,5 @@ def city(message: Message) -> None:
     """
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
         data['city']: str = message.text
-        bot.send_message(message.from_user.id, 'Уточните, пожалуйста, локацию:',
+        bot.send_message(message.from_user.id, 'Уточните, пожалуйста, локацию',
                          reply_markup=city_markup(user_city=message))  # Отправляем кнопки с вариантами

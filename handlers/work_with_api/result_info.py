@@ -1,10 +1,15 @@
 from . import request
 from requests import Response
 import json
+from json import JSONDecodeError
 from loader import bot
 from config_data import config
 from typing import List, Dict, Any
 from telebot.types import InputMediaPhoto
+from loguru import logger
+
+logger.add('debug.log', level='DEBUG', format="{time} {level} {message}", rotation="08:00",
+           compression="zip")
 
 
 def hotels(user: Any, chat: Any) -> None:
@@ -41,61 +46,80 @@ def hotels(user: Any, chat: Any) -> None:
                                        "currency": "RUB", "landmarkIds": landmarkIds}
 
         if data['command'] == '/lowprice':
-            response: Response = request.get_request(url=url, headers=config.headers, params=querystring)
-            hotels_dict: Dict = json.loads(response.text)
-            hotels_lst: List[Dict] = hotels_dict['data']['body']['searchResults']['results']  # список со словарями
-            result_hotels_lst: List = []
+            try:
+                response: Response = request.get_request(url=url, headers=config.headers, params=querystring)
+                hotels_dict: Dict = json.loads(response.text)
+                hotels_lst: List[Dict] = hotels_dict['data']['body']['searchResults']['results']  # список со словарями
+                result_hotels_lst: List = []
 
-            for i_hotel in hotels_lst:
-                try:
+                for i_hotel in hotels_lst:
+
                     if i_hotel['name'] and i_hotel['id'] and i_hotel['address']['streetAddress'] and \
                             i_hotel['landmarks'][0]['label'] and i_hotel['landmarks'][1]['label'] and \
                             i_hotel['ratePlan']['price']['exactCurrent']:  # проверяю, есть ли такие параметры
                         result_hotels_lst.append(i_hotel)
-                except Exception as err:
-                    print(err)
+            except (KeyError, ValueError, LookupError, TypeError, IndexError, JSONDecodeError) as exc:
+                logger.exception(exc)
+
+            if len(result_hotels_lst) == 0:
+                bot.send_message(user, 'К сожалению, отелей, удовлетворяющих условиям Вашего запроса, не найдено. '
+                                       'Попробуйте изменить условия поиска, приносим свои извинения.')
+            elif len(result_hotels_lst) < int(data['count_hotels']):
+                bot.send_message(user,
+                                 f'К сожалению, удалось найти только {len(result_hotels_lst)} отеля, '
+                                 f'удовлетворяющих условиям Вашего запроса. '
+                                 'Попробуйте изменить условия поиска, приносим свои извинения.')
 
             for i_hot in result_hotels_lst[:int(data['count_hotels'])]:
                 send_info_hotel(user, chat, hotel=i_hot)
 
         elif data['command'] == '/highprice':
+            try:
+                response: Response = request.get_request(url=url, headers=config.headers, params=querystring)
 
-            response: Response = request.get_request(url=url, headers=config.headers, params=querystring)
+                hotels_dict: Dict = json.loads(response.text)
+                hotels_lst: List[Dict] = hotels_dict['data']['body']['searchResults']['results']
+                result_hotels_lst: List = []
 
-            hotels_dict: Dict = json.loads(response.text)
-            hotels_lst: List[Dict] = hotels_dict['data']['body']['searchResults']['results']
-            result_hotels_lst: List = []
+                for i_hotel in hotels_lst:
 
-            for i_hotel in hotels_lst:
-                try:
                     if i_hotel['name'] and i_hotel['id'] and i_hotel['address']['streetAddress'] and \
                             i_hotel['landmarks'][0]['label'] and i_hotel['landmarks'][1]['label'] and \
                             i_hotel['ratePlan']['price']['exactCurrent']:
                         result_hotels_lst.append(i_hotel)
 
-                except Exception as err:
-                    print(err)
+            except (KeyError, ValueError, LookupError, TypeError, IndexError, JSONDecodeError) as exc:
+                logger.exception(exc)
+
+            if len(result_hotels_lst) == 0:
+                bot.send_message(user, 'К сожалению, отелей, удовлетворяющих условиям Вашего запроса, не найдено. '
+                                       'Попробуйте изменить условия поиска, приносим свои извинения.')
+            elif len(result_hotels_lst) < int(data['count_hotels']):
+                bot.send_message(user,
+                                 f'К сожалению, удалось найти только {len(result_hotels_lst)} отеля, '
+                                 f'удовлетворяющих условиям Вашего запроса. '
+                                 'Попробуйте изменить условия поиска, приносим свои извинения.')
 
             for i_hot in result_hotels_lst[:int(data['count_hotels'])]:
                 send_info_hotel(user, chat, hotel=i_hot)
 
         elif data['command'] == '/bestdeal':
+            try:
+                response: Response = request.get_request(url=url, headers=config.headers, params=querystring)
+                hotels_dict: Dict = json.loads(response.text)
+                hotels_lst: List[Dict] = hotels_dict['data']['body']['searchResults']['results']
+                result_hotels_lst: List = []
 
-            response: Response = request.get_request(url=url, headers=config.headers, params=querystring)
-            hotels_dict: Dict = json.loads(response.text)
-            hotels_lst: List[Dict] = hotels_dict['data']['body']['searchResults']['results']
-            result_hotels_lst: List = []
+                for i_hotel in hotels_lst:
 
-            for i_hotel in hotels_lst:
-                try:
                     if i_hotel['name'] and i_hotel['id'] and i_hotel['address']['streetAddress'] and \
                             i_hotel['landmarks'][0]['label'] and i_hotel['landmarks'][1]['label'] and \
                             i_hotel['ratePlan']['price']['exactCurrent'] and float(i_hotel['landmarks'][0]['distance'][
                                                                                    :3].replace(',', '.')) <= float(data[
                                                                                                                        'distance_range']):
                         result_hotels_lst.append(i_hotel)
-                except Exception as err:
-                    print(err)
+            except (KeyError, ValueError, LookupError, TypeError, IndexError, JSONDecodeError) as exc:
+                logger.exception(exc)
             result_hotels_lst_sorted: List[Dict] = sorted(result_hotels_lst,
                                                           key=lambda elem: elem['ratePlan']['price']['exactCurrent'])
 
@@ -107,7 +131,7 @@ def hotels(user: Any, chat: Any) -> None:
                                  f'К сожалению, удалось найти только {len(result_hotels_lst_sorted)} отеля, '
                                  f'удовлетворяющих условиям Вашего запроса. '
                                  'Попробуйте изменить условия поиска, приносим свои извинения.')
-            print(result_hotels_lst_sorted)
+
             for i_hot in result_hotels_lst_sorted[:int(data['count_hotels'])]:
                 send_info_hotel(user, chat, hotel=i_hot)
 
@@ -135,8 +159,8 @@ def photo(user: Any, chat: Any, id_hotel: str):
                 photo_media_lst.append(url_photo)
 
             return photo_media_lst
-    except Exception as err:
-        print(err)
+    except (TypeError, JSONDecodeError) as exc:
+        logger.exception(exc)
 
 
 def send_info_hotel(user: Any, chat: Any, hotel: Dict) -> None:
@@ -174,5 +198,5 @@ def send_info_hotel(user: Any, chat: Any, hotel: Dict) -> None:
 
             bot.send_media_group(chat, media)
 
-    except Exception as err:
-        print(err)
+    except (KeyError, ValueError, LookupError, TypeError, IndexError) as exc:
+        logger.exception(exc)
