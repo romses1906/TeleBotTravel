@@ -7,3 +7,5 @@ from loader import bot
 def bot_start(message: Message) -> None:
     bot.reply_to(message,
                  f'Привет, {message.from_user.full_name}! Я Трэвэл Бот)\nЧтобы узнать мои команды напиши "/help"')
+
+# TODO дописать докстринги

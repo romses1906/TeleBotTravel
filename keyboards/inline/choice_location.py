@@ -13,7 +13,7 @@ from loguru import logger
 logger.add('debug.log', level='DEBUG', format="{time} {level} {message}", rotation="08:00",
            compression="zip")
 
-
+# TODO поправить все выделения в коде которые подсвечивает пайчарм
 def city_founding(city: Message) -> List[Dict[str, str]]:
     """
     Функция для запроса к API и поиска локаций в введенном пользователем городе
@@ -61,7 +61,7 @@ def city_markup(user_city: Message) -> InlineKeyboardMarkup:
 
         # Функция "city_founding" уже возвращает список словарей с нужным именем и id
         destinations: InlineKeyboardMarkup = types.InlineKeyboardMarkup()
-
+        # TODO поправить все выделения в коде которые подсвечивает пайчарм
         for city in cities:
             destinations.add(types.InlineKeyboardButton(text=city['city_name'],
                                                         callback_data=f'{city["destination_id"]}'))
@@ -69,7 +69,7 @@ def city_markup(user_city: Message) -> InlineKeyboardMarkup:
     except TypeError as exc:
         logger.exception(exc)
 
-
+# TODO имя функции не информативное
 def city(message: Message) -> None:
     """
     Функция вывода на экран inline-кнопок для уточнения локации в выбранном городе

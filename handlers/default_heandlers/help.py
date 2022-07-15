@@ -14,3 +14,5 @@ def bot_help(message: Message) -> None:
             "/history - Вывод истории поиска отелей",
             )
     bot.reply_to(message, '\n'.join(text))
+
+# TODO дописать докстринги

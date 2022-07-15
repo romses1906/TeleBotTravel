@@ -6,3 +6,4 @@ def request_contact() -> ReplyKeyboardMarkup:
     return keyboard
 
 
+# TODO поправить все выделения в коде пайчарма

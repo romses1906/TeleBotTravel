@@ -72,7 +72,7 @@ def get_location(call: types.CallbackQuery) -> None:
 
     with bot.retrieve_data(call.from_user.id, call.message.chat.id) as data:
         locations = call.message.json['reply_markup']['inline_keyboard']
-
+        # TODO применить рекомендации данные ранее
         for i_locations in locations:
             if call.data == i_locations[0]['callback_data']:
                 data['location']: str = i_locations[0]['text']

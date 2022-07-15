@@ -11,7 +11,10 @@ from loguru import logger
 logger.add('debug.log', level='DEBUG', format="{time} {level} {message}", rotation="08:00",
            compression="zip")
 
-
+# TODO все что подчеркнул пайчарм исправить
+# TODO из нейминга убрать list set dict tuple
+# TODO отказаться от однобуквенного префикса в заголовке цикла i_
+# TODO сильно длинная функция
 def hotels(user: Any, chat: Any) -> None:
     """
     Функция для запроса к API и получения необходимых данных об отелях
@@ -184,6 +187,7 @@ def send_info_hotel(user: Any, chat: Any, hotel: Dict) -> None:
             price: float = hotel['ratePlan']['price']['exactCurrent']
             rest_days: int = (data['date_departure'] - data['date_arrival']).days
             full_price: float = round(price * rest_days, 2)
+            # TODO \ знак для переноса не используем
             find_info = f'Название отеля: {name}\nСайт отеля: https://www.hotels.com/ho{hotel_id}\n' \
                         f'Адрес отеля: {adress}\n' \
                         f'Расстояние от отеля до "{name_label_1}": {distance_from_label_1}\n' \
@@ -192,7 +196,7 @@ def send_info_hotel(user: Any, chat: Any, hotel: Dict) -> None:
                         f'Стоимость проживания за {rest_days} суток: {full_price} RUB'
 
             media_lst = photo(user=user, chat=chat, id_hotel=hotel_id)
-
+            # TODO что такое pic ?
             media = [InputMediaPhoto(media_lst[pic], find_info) if pic == len(media_lst) - 1 else InputMediaPhoto(
                 media_lst[pic]) for pic in range(len(media_lst))]
 

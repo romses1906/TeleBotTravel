@@ -6,3 +6,5 @@ from loader import bot
 @bot.message_handler(state=None)
 def bot_echo(message: Message) -> None:
     bot.reply_to(message, f'Эхо без состояния или фильтра.\nСообщение: {message.text}')
+
+# TODO дописать докстринги

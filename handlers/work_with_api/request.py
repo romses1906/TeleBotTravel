@@ -21,5 +21,6 @@ def get_request(url: str, headers: Dict[str, str], params: Dict[str, str]) -> Re
         response: Response = requests.get(url=url, headers=headers, params=params, timeout=10)
         if response.status_code == requests.codes.ok:  # почитать, что это значит
             return response
+        # TODO + ловим ошибку на таймаут
     except requests.exceptions.RequestException as exc:
         logger.exception(exc)

@@ -1,7 +1,7 @@
 from telegram_bot_calendar import DetailedTelegramCalendar
 from loguru import logger
 
-
+# TODO поправить все выделения в коде которые подсвечивает пайчарм
 logger.add('debug.log', level='DEBUG', format="{time} {level} {message}", rotation="08:00",
                compression="zip")
 
