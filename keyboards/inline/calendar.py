@@ -1,5 +1,9 @@
 from telegram_bot_calendar import DetailedTelegramCalendar
-from typing import Dict
+from loguru import logger
+
+
+logger.add('debug.log', level='DEBUG', format="{time} {level} {message}", rotation="08:00",
+               compression="zip")
 
 
 def get_calendar(is_process: bool = False, callback_data=None, **kwargs):
@@ -26,5 +30,5 @@ def get_calendar(is_process: bool = False, callback_data=None, **kwargs):
                                                       max_date=kwargs['max_date'],
                                                       locale=kwargs['locale']).build()
             return calendar, step
-    except Exception as err:
-        print(err)
+    except (KeyError, ValueError, LookupError, TypeError) as exc:
+        logger.exception(exc)
