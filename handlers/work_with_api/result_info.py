@@ -209,15 +209,15 @@ def send_info_hotel(user: Any, chat: Any, hotel: Dict) -> None:
 
             logger.info(f"Отель по результатам поиска для пользователя {user}: {find_info}\n")
 
-            find_media: List[str] = photo(user=user, chat=chat, id_hotel=hotel_id)
-
-            media_group: List[InputMediaPhoto] = [InputMediaPhoto(find_media[num_photo], find_info) if num_photo == len(
-                find_media) - 1 else InputMediaPhoto(
-                find_media[num_photo]) for num_photo in range(len(find_media))]
             if data['count_photo'] == 0:
                 bot.send_message(user, find_info)
 
             else:
+                find_media: List[str] = photo(user=user, chat=chat, id_hotel=hotel_id)
+
+                media_group: List[InputMediaPhoto] = [InputMediaPhoto(find_media[num_photo], find_info)
+                                                      if num_photo == len(find_media) - 1 else InputMediaPhoto(
+                    find_media[num_photo]) for num_photo in range(len(find_media))]
                 bot.send_media_group(chat, media_group)
             models.History.create_table()
 

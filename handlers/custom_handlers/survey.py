@@ -207,7 +207,7 @@ def get_min_price(message: Message) -> None:
     :param message: Message - сообщение пользователя с минимально допустимой ценой проживания за 1 сутки
     :return: None
     """
-    if message.text.isdigit() and 0 < int(message.text):
+    if message.text.isdigit() and 0 <= int(message.text):
         bot.send_message(message.from_user.id,
                          'Спасибо, записал. Введите максимальную цену (руб)')
         bot.set_state(message.from_user.id, UserInfoState.max_price, message.chat.id)
@@ -232,19 +232,21 @@ def get_max_price(message: Message) -> None:
     :param message: Message - сообщение пользователя с максимально допустимой ценой проживания за 1 сутки
     :return: None
     """
-    if message.text.isdigit() and 0 < int(message.text):
-        bot.send_message(message.from_user.id,
-                         'Спасибо, записал. Введите максимальное расстояние отелей от центра города для поиска (км)')
-        bot.set_state(message.from_user.id, UserInfoState.distance_range, message.chat.id)
+    with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
 
-        with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
+        if message.text.isdigit() and 0 < int(message.text) and int(message.text) > int(data['min_price']):
+            bot.send_message(message.from_user.id,
+                             'Спасибо, записал. Введите максимальное расстояние отелей от центра города '
+                             'для поиска (км)')
+            bot.set_state(message.from_user.id, UserInfoState.distance_range, message.chat.id)
             data['max_price'] = message.text
             logger.info(f"Пользователь {message.from_user.id} задал максимальную цену за проживание за 1 сутки: "
                         f"{data['max_price']} RUB")
 
-    else:
-        bot.send_message(message.from_user.id,
-                         'Введите пожалуйста целое неотрицательное число')
+        else:
+            bot.send_message(message.from_user.id,
+                             'Введите пожалуйста целое неотрицательное число (больше минимальной '
+                             'цены {min_price} RUB)'.format(min_price=data['min_price']))
 
 
 @bot.message_handler(state=UserInfoState.distance_range)
@@ -264,12 +266,12 @@ def get_distance_range(message: Message) -> None:
 
         with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
             data['distance_range'] = message.text
-            logger.info(f"Пользователь {message.from_user.id} задал максимальной расстояние от центра города: "
+            logger.info(f"Пользователь {message.from_user.id} задал максимальное расстояние от центра города: "
                         f"{data['min_price']} км")
 
     else:
         bot.send_message(message.from_user.id,
-                         'Введите пожалуйста целое неотрицательное число')
+                         'Введите пожалуйста целое число больше 0')
 
 
 @bot.message_handler(state=UserInfoState.count_hotels)
