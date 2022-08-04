@@ -16,7 +16,7 @@ def debug_only(record: Dict) -> bool:  # не уверен по поводу а�
     """
     Функция создания фильтра логов для файла debug.log.
 
-    :param record: dict
+    :param record: Dict
     :return: bool
     """
 
@@ -32,8 +32,8 @@ def hotels(user: Any, chat: Any) -> None:
     Функция для запроса к API и получения необходимых данных об отелях
     в зависимости от изначальной команды пользователя
 
-    :param user: Any
-    :param chat: Any
+    :param user: Any - id пользователя
+    :param chat: Any - id чата
     :return: None
     """
     url: str = "https://hotels4.p.rapidapi.com/properties/list"
@@ -108,10 +108,10 @@ def hotels_low_high(user: Any, chat: Any, url: str, querystring: Dict[str, str])
     Функция для запроса к API и получения необходимых данных об отелях
     при команде пользователя 'lowprice' или 'highprice'
 
-    :param user: Any
-    :param chat: Any
-    :param url: str
-    :param querystring: Dict[str, str]
+    :param user: Any - id пользователя
+    :param chat: Any - id чата
+    :param url: str - адрес сайта для поиска отелей
+    :param querystring: Dict[str, str] - необходимые параметры для поиска отелей
     :return: None
     """
     with bot.retrieve_data(user, chat) as data:
@@ -154,9 +154,9 @@ def photo(user: Any, chat: Any, id_hotel: str) -> List[str]:
     """
     Функция для запроса к API и вывода фотографий отелей на экран
 
-    :param user: Any
-    :param chat: Any
-    :param id_hotel: str
+    :param user: Any - id пользователя
+    :param chat: Any - id чата
+    :param id_hotel: str - id отеля
     :return: None
     """
     url: str = "https://hotels4.p.rapidapi.com/properties/get-hotel-photos"
@@ -181,9 +181,9 @@ def send_info_hotel(user: Any, chat: Any, hotel: Dict) -> None:
     """
     Функция вывода на экран необходимой информации об отеле
 
-    :param user: Any
-    :param chat: Any
-    :param hotel: Dict
+    :param user: Any - id пользователя
+    :param chat: Any - id чата
+    :param hotel: Dict - словарь с данными об отеле
     :return: None
     """
     try:
@@ -191,6 +191,7 @@ def send_info_hotel(user: Any, chat: Any, hotel: Dict) -> None:
             hotel_name: str = hotel['name']
             hotel_id = data['hotel_id'] = hotel['id']
             address: str = hotel['address']['streetAddress']
+            rating: str = hotel['starRating']
             name_label_1: str = hotel['landmarks'][0]['label']
             distance_from_label_1: str = hotel['landmarks'][0]['distance']
             name_label_2: str = hotel['landmarks'][1]['label']
@@ -199,7 +200,9 @@ def send_info_hotel(user: Any, chat: Any, hotel: Dict) -> None:
             rest_days: int = (data['date_departure'] - data['date_arrival']).days
             full_price: float = round(price * rest_days, 2)
             find_info = (f'Название отеля: {hotel_name}\nСайт отеля: https://www.hotels.com/ho{hotel_id}\n'
-                         f'Адрес отеля: {address}\nРасстояние от отеля до "{name_label_1}": {distance_from_label_1}\n'
+                         f'Адрес отеля: {address}\n'
+                         f'Рейтинг отеля (количество звезд): {rating}\n'
+                         f'Расстояние от отеля до "{name_label_1}": {distance_from_label_1}\n'
                          f'Расстояние от отеля до "{name_label_2}": {distance_from_label_2}\n'
                          f'Стоимость проживания за 1 сутки: {price} RUB\n'
                          f'Стоимость проживания за {rest_days} суток: {full_price} RUB')
@@ -213,6 +216,7 @@ def send_info_hotel(user: Any, chat: Any, hotel: Dict) -> None:
                 find_media[num_photo]) for num_photo in range(len(find_media))]
             if data['count_photo'] == 0:
                 bot.send_message(user, find_info)
+
             else:
                 bot.send_media_group(chat, media_group)
             models.History.create_table()

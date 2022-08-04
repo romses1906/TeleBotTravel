@@ -11,7 +11,7 @@ def get_request(url: str, headers: Dict[str, str], params: Dict[str, str]) -> Re
     :param url: передается адрес для запроса
     :param headers: передаются key и host для запроса
     :param params: передаются необходимые параметры для запроса
-    :return: Response
+    :return response: Response - ответ на запрос
     """
 
     try:

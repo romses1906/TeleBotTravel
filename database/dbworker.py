@@ -10,9 +10,9 @@ def save_db(user: Any, chat: Any, hotel: Dict) -> None:
     """
     Функция для записи данных в таблицу базы данных
 
-    :param user: Any
-    :param chat: Any
-    :param hotel: Dict
+    :param user: Any - id пользователя
+    :param chat: Any - id чата
+    :param hotel: Dict - словарь с данными об отеле
     :return: None
     """
     try:
@@ -47,7 +47,7 @@ def get_history(message: Message) -> None:
     Функция для получения и вывода на экран данных об истории поиска отелей конкретного пользователя
     из таблицы базы данных history
 
-    :param message: Message
+    :param message: Message - сообщение пользователя с командой 'history'
     :return: None
     """
     query: Any = models.History.select().where((models.History.uid == message.from_user.id)).order_by(

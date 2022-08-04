@@ -33,7 +33,7 @@ def survey(message: Message) -> None:
     Хэндлер команд 'lowprice', 'highprice', 'bestdeal',
     начинает запрашивать параметры от пользователя, присваивает состояние 'name'
 
-    :param message: Message
+    :param message: Message - сообщение пользователя с одной из команд: 'lowprice', 'highprice', 'bestdeal'
     :return: None
     """
     bot.delete_state(message.from_user.id, message.chat.id)
@@ -50,7 +50,7 @@ def history(message: Message) -> None:
     Хэндлер команды 'history', при вводе пользователем данной команды происходит
     вызов функции dbworker.get_history(message)
 
-    :param message: Message
+    :param message: Message - сообщение пользователя с командой 'history'
     :return: None
     """
     logger.info(f"Пользователь {message.from_user.id} выбрал команду '/history'")
@@ -63,7 +63,7 @@ def get_name(message: Message) -> None:
     Хэндлер состояния 'name', запрашивает у пользователя город для поиска отелей,
     далее происходит уточнение локации в городе
 
-    :param message: Message
+    :param message: Message - сообщение пользователя с его именем
     :return: None
     """
     if message.text.isalpha():
@@ -88,7 +88,7 @@ def get_location(call: types.CallbackQuery) -> None:
     Обработчик inline-кнопок с выбором локации в городе,
     далее происходит уточнение даты заезда в отель
 
-    :param call: CallbackQuery
+    :param call: CallbackQuery - выбранная пользователем локация в городе
     :return: None
     """
     bot.edit_message_reply_markup(chat_id=call.message.chat.id, message_id=call.message.message_id)
@@ -121,7 +121,7 @@ def handle_arrival_date(call: types.CallbackQuery) -> None:
     Обработчик кнопок для выбора даты заезда, фиксирует дату заезда,
     далее происходит уточнение даты выезда из отеля
 
-    :param call: CallbackQuery
+    :param call: CallbackQuery - выбранная пользователем дата заезда в отель
     :return: None
     """
     today: date = date.today()
@@ -164,7 +164,7 @@ def handle_departure_date(call: types.CallbackQuery) -> None:
     в случае выбора команды 'bestdeal' запрашивается минимальная цена за 1 сутки проживания, присваивается состояние
     'min_price'
 
-    :param call: CallbackQuery
+    :param call: CallbackQuery - выбранная пользователем дата выезда из отеля
     :return: None
     """
     today: date = date.today()
@@ -204,7 +204,7 @@ def get_min_price(message: Message) -> None:
     Хэндлер состояния 'min_price', фиксирует минимальную цену проживания,
     запрашивает максимальную цену за 1 сутки проживания, присваивает состояние 'max_price'
 
-    :param message: Message
+    :param message: Message - сообщение пользователя с минимально допустимой ценой проживания за 1 сутки
     :return: None
     """
     if message.text.isdigit() and 0 < int(message.text):
@@ -229,7 +229,7 @@ def get_max_price(message: Message) -> None:
     Хэндлер состояния 'max_price', фиксирует максимальную цену за 1 сутки проживания,
     запрашивает максимальную удаленность искомых отелей от центра города, присваивает состояние 'distance_range'
 
-    :param message: Message
+    :param message: Message - сообщение пользователя с максимально допустимой ценой проживания за 1 сутки
     :return: None
     """
     if message.text.isdigit() and 0 < int(message.text):
@@ -253,7 +253,7 @@ def get_distance_range(message: Message) -> None:
     Хэндлер состояния 'distance_range', фиксирует максимальное расстояние от центра города,
     запрашивает количество выводимых на экран отелей, присваивает состояние 'count_hotels'
 
-    :param message: Message
+    :param message: Message - сообщение пользователя с максимальным расстоянием от центра города в км
     :return: None
     """
     if message.text.isdigit() and 0 < int(message.text):
@@ -278,7 +278,7 @@ def get_count_hotels(message: Message) -> None:
     Хэндлер состояния 'count_hotels', фиксирует количество выводимых на экран отелей в результате поиска,
     запрашивает о необходимости вывода фото отелей на экран, присваивает состояние 'photo'
 
-    :param message: Message
+    :param message: Message - сообщение пользователя с количеством выводимых на экран отелей
     :return: None
     """
     if message.text.isdigit() and 0 < int(message.text) <= 5:
@@ -305,7 +305,7 @@ def get_photo(call: types.CallbackQuery) -> None:
     запрашивает количество фото для вывода на экран и присваивает состояние 'count_photo',
     если нет, присваивает состояние 'final_info'
 
-    :param call: CallbackQuery
+    :param call: CallbackQuery - выбор пользователя и необходимости вывода фото отелей на экран
     :return: None
     """
     bot.edit_message_reply_markup(chat_id=call.message.chat.id, message_id=call.message.message_id)
@@ -336,7 +336,7 @@ def get_count_photo(message: Message) -> None:
     Хэндлер состояния 'count_photo', фиксирует количество выводимых на экран фото отелей в результате поиска,
     присваивает состояние 'final_info'
 
-    :param message: Message
+    :param message: Message - сообщение пользователя с количеством выводимых фото отеля на экран
     :return: None
     """
     if message.text.isdigit() and 0 < int(message.text) <= 10:
@@ -352,14 +352,15 @@ def get_count_photo(message: Message) -> None:
 
 
 @bot.message_handler(state=UserInfoState.final_information)
-def get_final_info(message, is_rejection: bool = False) -> None:
+def get_final_info(message: Any, is_rejection: bool = False) -> None:
     """
     Функция вывода информации на экран по результатам опроса пользователя,
     далее запрос к API через функцию hotels() для вывода результатов поиска
     в зависимости от выбранной изначально команды
 
-    :param message: Message
-    :param is_rejection: bool
+    :param message: Any - либо сообщение от пользователя с количеством необходимых фото для вывода на экран,
+                    либо нажатие кнопки об отсутствии необходимости вывода фото
+    :param is_rejection: bool - булево значение для определения действия пользователя (сообщение или нажатие кнопки)
     :return: None
     """
     if is_rejection:

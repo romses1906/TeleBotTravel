@@ -15,8 +15,8 @@ def city_founding(city: Message) -> List[Dict[str, str]]:
     """
     Функция для запроса к API и поиска локаций в введенном пользователем городе
 
-    :param city: город, выбранный пользователем для поиска отелей
-    :return: список словарей с наименованиями локаций  и их id
+    :param city: Message - город, выбранный пользователем для поиска отелей
+    :return cities: List[Dict[str, str]] - список словарей с наименованиями локаций  и их id
     """
     url_locations_search: str = "https://hotels4.p.rapidapi.com/locations/v2/search"
 
@@ -49,8 +49,8 @@ def city_markup(user_city: Message) -> InlineKeyboardMarkup:
     """
     Функция создания инлайн-кнопок для уточнения локации в выбранном городе
 
-    :param user_city: город, выбранный пользователем для поиска отелей
-    :return destinations: инлайн-кнопки для выбора локации в указанном городе
+    :param user_city: Message -  город, выбранный пользователем для поиска отелей
+    :return destinations: InlineKeyboardMarkup - инлайн-кнопки для выбора локации в указанном городе
     """
 
     try:
@@ -71,7 +71,7 @@ def user_location(message: Message) -> None:
     """
     Функция вывода на экран inline-кнопок для уточнения локации в выбранном городе
 
-    :param message: Message
+    :param message: Message - сообщение пользователя с названием города
     :return: None
     """
 

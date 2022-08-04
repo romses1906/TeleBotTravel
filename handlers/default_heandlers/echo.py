@@ -8,7 +8,7 @@ def bot_echo(message: Message) -> None:
     """
     Эхо-хендлер, куда поступают текстовые сообщения без указанного состояния
 
-    :param message: Message
+    :param message: Message - сообщение от пользователя без указанного состояния
     :return: None
     """
 

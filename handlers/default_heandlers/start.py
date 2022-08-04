@@ -8,7 +8,7 @@ def bot_start(message: Message) -> None:
     """
     Хэндлер команды 'start', выводит на экран приветственное сообщение
 
-    :param message: Message
+    :param message: Message - сообщение от пользователя с командой 'start'
     :return: None
     """
     bot.reply_to(message,

@@ -8,7 +8,7 @@ def bot_help(message: Message) -> None:
     """
     Хэндлер команды 'help', выводит на экран список команд телеграм-бота
 
-    :param message: Message
+    :param message: Message - сообщение от пользователя с командой 'help'
     :return: None
     """
     text = ("Список команд: ",
